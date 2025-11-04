@@ -1,6 +1,6 @@
 import { Button } from "@/components/ui/button";
-import { ArrowRight } from "lucide-react";
-import heroBg from "@/assets/hero-bg.jpg";
+import { ArrowRight, Star } from "lucide-react";
+import heroBg from "@/assets/restaurant-hero.jpg";
 
 const Hero = () => {
   const scrollToDemo = () => {
@@ -19,14 +19,18 @@ const Hero = () => {
       }}
     >
       {/* Overlay */}
-      <div className="absolute inset-0 bg-gradient-to-br from-[hsl(220,85%,25%,0.95)] via-[hsl(250,85%,40%,0.9)] to-[hsl(270,75%,40%,0.95)]"></div>
+      <div className="absolute inset-0 bg-gradient-to-br from-[hsl(0,0%,0%,0.75)] via-[hsl(24,85%,25%,0.85)] to-[hsl(12,80%,20%,0.9)]"></div>
+      
+      {/* Decorative elements */}
+      <div className="absolute top-20 left-10 w-32 h-32 bg-accent/10 rounded-full blur-3xl animate-pulse-soft"></div>
+      <div className="absolute bottom-20 right-10 w-40 h-40 bg-primary/10 rounded-full blur-3xl animate-pulse-soft" style={{ animationDelay: "1s" }}></div>
       
       {/* Content */}
       <div className="relative z-10 container mx-auto px-4 sm:px-6 lg:px-8 text-center">
         <div className="max-w-4xl mx-auto animate-fade-in">
           <h1 className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-bold text-white mb-6 leading-tight">
             Empower Your Restaurant with{" "}
-            <span className="bg-gradient-to-r from-blue-200 to-purple-200 bg-clip-text text-transparent">
+            <span className="bg-gradient-gold bg-clip-text text-transparent drop-shadow-glow">
               24/7 AI Chat Assistance
             </span>
           </h1>
@@ -40,7 +44,7 @@ const Hero = () => {
             <Button
               onClick={scrollToDemo}
               size="lg"
-              className="bg-white text-primary hover:bg-white/90 shadow-strong text-base sm:text-lg px-8 py-6 group"
+              className="bg-gradient-gold hover:opacity-90 text-white shadow-glow text-base sm:text-lg px-8 py-6 group font-semibold"
             >
               Try the Live Demo
               <ArrowRight className="ml-2 group-hover:translate-x-1 transition-transform" />
@@ -52,8 +56,7 @@ const Hero = () => {
                 element?.scrollIntoView({ behavior: "smooth" });
               }}
               size="lg"
-              variant="outline"
-              className="border-2 border-white text-white hover:bg-white/10 text-base sm:text-lg px-8 py-6"
+              className="border-2 border-white/30 bg-white/10 backdrop-blur-sm text-white hover:bg-white/20 text-base sm:text-lg px-8 py-6"
             >
               Book a Demo
             </Button>
@@ -61,17 +64,21 @@ const Hero = () => {
 
           {/* Stats or trust indicators */}
           <div className="mt-16 grid grid-cols-3 gap-8 max-w-2xl mx-auto">
-            <div className="text-center">
-              <div className="text-3xl sm:text-4xl font-bold text-white mb-2">24/7</div>
-              <div className="text-sm sm:text-base text-white/80">Always Available</div>
+            <div className="text-center p-6 rounded-2xl bg-white/5 backdrop-blur-sm border border-white/10">
+              <div className="text-3xl sm:text-4xl font-bold bg-gradient-gold bg-clip-text text-transparent mb-2">24/7</div>
+              <div className="text-sm sm:text-base text-white/90">Always Available</div>
             </div>
-            <div className="text-center">
-              <div className="text-3xl sm:text-4xl font-bold text-white mb-2">&lt;1s</div>
-              <div className="text-sm sm:text-base text-white/80">Response Time</div>
+            <div className="text-center p-6 rounded-2xl bg-white/5 backdrop-blur-sm border border-white/10">
+              <div className="text-3xl sm:text-4xl font-bold bg-gradient-gold bg-clip-text text-transparent mb-2">&lt;1s</div>
+              <div className="text-sm sm:text-base text-white/90">Response Time</div>
             </div>
-            <div className="text-center">
-              <div className="text-3xl sm:text-4xl font-bold text-white mb-2">95%</div>
-              <div className="text-sm sm:text-base text-white/80">Accuracy Rate</div>
+            <div className="text-center p-6 rounded-2xl bg-white/5 backdrop-blur-sm border border-white/10">
+              <div className="flex justify-center mb-2">
+                {[1, 2, 3, 4, 5].map((star) => (
+                  <Star key={star} className="w-5 h-5 fill-accent text-accent" />
+                ))}
+              </div>
+              <div className="text-sm sm:text-base text-white/90">5-Star Rated</div>
             </div>
           </div>
         </div>

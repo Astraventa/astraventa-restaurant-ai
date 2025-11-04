@@ -46,10 +46,10 @@ const Features = () => {
             return (
               <Card
                 key={index}
-                className="p-6 sm:p-8 hover:shadow-medium transition-all duration-300 border-border hover:border-primary/50 animate-slide-up bg-gradient-to-br from-card to-card/50"
+                className="p-6 sm:p-8 hover:shadow-glow transition-all duration-300 border-border hover:border-primary/50 animate-slide-up bg-gradient-to-br from-card to-muted/20 hover:scale-105"
                 style={{ animationDelay: `${index * 0.1}s` }}
               >
-                <div className="mb-4 w-14 h-14 rounded-2xl bg-gradient-premium flex items-center justify-center shadow-soft">
+                <div className="mb-4 w-14 h-14 rounded-2xl bg-gradient-gold flex items-center justify-center shadow-glow">
                   <Icon className="text-white" size={28} />
                 </div>
                 <h3 className="text-xl font-semibold mb-3">{feature.title}</h3>
@@ -63,22 +63,22 @@ const Features = () => {
 
         {/* Additional benefits section */}
         <div className="mt-20 text-center">
-          <div className="max-w-4xl mx-auto bg-gradient-card rounded-3xl p-8 sm:p-12 border border-border animate-fade-in">
-            <h3 className="text-2xl sm:text-3xl font-bold mb-6">
+          <div className="max-w-4xl mx-auto bg-gradient-to-br from-primary/5 via-accent/5 to-primary/5 rounded-3xl p-8 sm:p-12 border border-primary/20 animate-fade-in shadow-glow">
+            <h3 className="text-2xl sm:text-3xl font-bold mb-6 bg-gradient-premium bg-clip-text text-transparent">
               Why Choose Astraventa AI?
             </h3>
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-8">
-              <div>
-                <div className="text-4xl sm:text-5xl font-bold text-primary mb-2">99.9%</div>
-                <p className="text-muted-foreground">Uptime Guarantee</p>
+              <div className="p-6 rounded-2xl bg-white/50 backdrop-blur-sm">
+                <div className="text-4xl sm:text-5xl font-bold bg-gradient-gold bg-clip-text text-transparent mb-2">99.9%</div>
+                <p className="text-foreground/80 font-medium">Uptime Guarantee</p>
               </div>
-              <div>
-                <div className="text-4xl sm:text-5xl font-bold text-primary mb-2">5x</div>
-                <p className="text-muted-foreground">Faster Response</p>
+              <div className="p-6 rounded-2xl bg-white/50 backdrop-blur-sm">
+                <div className="text-4xl sm:text-5xl font-bold bg-gradient-gold bg-clip-text text-transparent mb-2">5x</div>
+                <p className="text-foreground/80 font-medium">Faster Response</p>
               </div>
-              <div>
-                <div className="text-4xl sm:text-5xl font-bold text-primary mb-2">30%</div>
-                <p className="text-muted-foreground">More Bookings</p>
+              <div className="p-6 rounded-2xl bg-white/50 backdrop-blur-sm">
+                <div className="text-4xl sm:text-5xl font-bold bg-gradient-gold bg-clip-text text-transparent mb-2">30%</div>
+                <p className="text-foreground/80 font-medium">More Bookings</p>
               </div>
             </div>
           </div>

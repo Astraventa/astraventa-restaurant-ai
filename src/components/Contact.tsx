@@ -101,7 +101,7 @@ const Contact = () => {
               <Button
                 type="submit"
                 disabled={isSubmitting}
-                className="w-full bg-gradient-premium hover:opacity-90 transition-opacity shadow-soft text-base py-6"
+                className="w-full bg-gradient-gold hover:opacity-90 transition-opacity shadow-glow text-base py-6 font-semibold"
               >
                 {isSubmitting ? "Sending..." : "Send Message"}
               </Button>
@@ -110,12 +110,12 @@ const Contact = () => {
 
           {/* Contact Info */}
           <div className="space-y-8 animate-slide-up" style={{ animationDelay: "0.2s" }}>
-            <div className="bg-card rounded-3xl p-8 border border-border shadow-soft">
-              <h3 className="text-2xl font-bold mb-6">Contact Information</h3>
+            <div className="bg-card rounded-3xl p-8 border border-primary/20 shadow-glow">
+              <h3 className="text-2xl font-bold mb-6 bg-gradient-premium bg-clip-text text-transparent">Contact Information</h3>
               
               <div className="space-y-6">
                 <div className="flex items-start space-x-4">
-                  <div className="w-12 h-12 bg-gradient-premium rounded-xl flex items-center justify-center flex-shrink-0">
+                  <div className="w-12 h-12 bg-gradient-gold rounded-xl flex items-center justify-center flex-shrink-0 shadow-soft">
                     <Mail className="text-white" size={24} />
                   </div>
                   <div>
@@ -125,7 +125,7 @@ const Contact = () => {
                 </div>
 
                 <div className="flex items-start space-x-4">
-                  <div className="w-12 h-12 bg-gradient-premium rounded-xl flex items-center justify-center flex-shrink-0">
+                  <div className="w-12 h-12 bg-gradient-gold rounded-xl flex items-center justify-center flex-shrink-0 shadow-soft">
                     <Phone className="text-white" size={24} />
                   </div>
                   <div>
@@ -135,7 +135,7 @@ const Contact = () => {
                 </div>
 
                 <div className="flex items-start space-x-4">
-                  <div className="w-12 h-12 bg-gradient-premium rounded-xl flex items-center justify-center flex-shrink-0">
+                  <div className="w-12 h-12 bg-gradient-gold rounded-xl flex items-center justify-center flex-shrink-0 shadow-soft">
                     <MapPin className="text-white" size={24} />
                   </div>
                   <div>
@@ -149,7 +149,7 @@ const Contact = () => {
               </div>
             </div>
 
-            <div className="bg-gradient-card rounded-3xl p-8 border border-border">
+            <div className="bg-gradient-to-br from-primary/10 to-accent/10 rounded-3xl p-8 border border-primary/30 shadow-soft">
               <h3 className="text-xl font-bold mb-4">Schedule a Demo</h3>
               <p className="text-muted-foreground mb-6">
                 See Astraventa AI in action with a personalized demo tailored to your restaurant's needs.
@@ -161,8 +161,7 @@ const Contact = () => {
                     description: "We'll contact you shortly to schedule.",
                   });
                 }}
-                variant="outline"
-                className="w-full border-2 border-primary hover:bg-primary/10"
+                className="w-full bg-gradient-premium hover:opacity-90 transition-opacity"
               >
                 Book a Demo Call
               </Button>

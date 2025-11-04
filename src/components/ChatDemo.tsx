@@ -25,10 +25,10 @@ const ChatDemo = () => {
   useEffect(() => {
     // Show initial demo conversation
     const demoMessages: Message[] = [
-      { role: "user", content: "What's today's special?" },
+      { role: "user", content: "What's your signature dish?" },
       {
         role: "assistant",
-        content: "Today's Chef Special is Grilled Salmon with Lemon Butter Sauce. It comes with roasted vegetables and your choice of side. Would you like to make a reservation?",
+        content: "Our signature dish is the Truffle Risotto with seared scallops and aged parmesan. It's been featured in Michelin Guide! Would you like to reserve a table to try it?",
       },
     ];
 
@@ -56,10 +56,10 @@ const ChatDemo = () => {
     // Simulate AI response (will be replaced with actual API call)
     setTimeout(() => {
       const responses = [
-        "I'd be happy to help you with that! Let me check our menu for you.",
-        "Great question! Our restaurant specializes in fresh, locally-sourced ingredients.",
-        "I can definitely assist with your reservation. What date and time works best for you?",
-        "Our opening hours are Monday-Sunday, 11am-11pm. Would you like to book a table?",
+        "I'd be delighted to help! Our wine list features over 100 carefully curated selections from Italy and France.",
+        "Excellent choice! Our chef recommends pairing that with our house-made pasta. Shall I reserve a table for you?",
+        "We're open Tuesday-Sunday, 5 PM to 11 PM. Would you like to book a table for a specific date?",
+        "Perfect! I can arrange that for you. Our terrace offers stunning sunset views. What time would work best?",
       ];
       
       const randomResponse = responses[Math.floor(Math.random() * responses.length)];
@@ -86,14 +86,18 @@ const ChatDemo = () => {
         <div className="max-w-4xl mx-auto">
           <div className="bg-card rounded-3xl shadow-strong border border-border overflow-hidden animate-slide-up">
             {/* Chat Header */}
-            <div className="bg-gradient-premium p-4 sm:p-6">
-              <div className="flex items-center space-x-3">
-                <div className="w-10 h-10 bg-white/20 rounded-full flex items-center justify-center">
+            <div className="bg-gradient-premium p-4 sm:p-6 relative overflow-hidden">
+              <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent animate-pulse-soft"></div>
+              <div className="flex items-center space-x-3 relative z-10">
+                <div className="w-12 h-12 bg-white/20 backdrop-blur-sm rounded-full flex items-center justify-center shadow-glow border border-white/30">
                   <Bot className="text-white" size={24} />
                 </div>
                 <div>
-                  <h3 className="text-white font-semibold">Astraventa AI Assistant</h3>
-                  <p className="text-white/80 text-sm">Online • Instant replies</p>
+                  <h3 className="text-white font-bold text-lg">La Bella Vista</h3>
+                  <p className="text-white/90 text-sm flex items-center gap-2">
+                    <span className="w-2 h-2 bg-green-400 rounded-full animate-pulse"></span>
+                    Online • Instant replies
+                  </p>
                 </div>
               </div>
             </div>
@@ -161,7 +165,7 @@ const ChatDemo = () => {
                 <Button
                   onClick={handleSend}
                   size="icon"
-                  className="rounded-full bg-gradient-premium hover:opacity-90 transition-opacity shadow-soft w-12 h-12"
+                  className="rounded-full bg-gradient-gold hover:opacity-90 transition-opacity shadow-glow w-12 h-12"
                 >
                   <Send size={20} />
                 </Button>
