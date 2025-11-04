@@ -34,7 +34,7 @@ const ChatDemo = () => {
 
     let index = 0;
     const interval = setInterval(() => {
-      if (index < demoMessages.length) {
+      if (index < demoMessages.length && demoMessages[index]) {
         setMessages((prev) => [...prev, demoMessages[index]]);
         index++;
       } else {
@@ -100,7 +100,7 @@ const ChatDemo = () => {
 
             {/* Messages */}
             <div className="h-[400px] sm:h-[500px] overflow-y-auto p-4 sm:p-6 space-y-4 bg-background">
-              {messages.map((message, index) => (
+              {messages.filter(m => m && m.role && m.content).map((message, index) => (
                 <div
                   key={index}
                   className={`flex items-start space-x-3 animate-fade-in ${
