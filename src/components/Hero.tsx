@@ -26,7 +26,7 @@ const Hero = () => {
       <div className="absolute bottom-20 right-10 w-40 h-40 bg-primary/10 rounded-full blur-3xl animate-pulse-soft" style={{ animationDelay: "1s" }}></div>
       
       {/* Content */}
-      <div className="relative z-10 container mx-auto px-4 sm:px-6 lg:px-8 text-center">
+      <div className="relative z-10 container mx-auto px-4 sm:px-6 lg:px-8 text-center mt-8 md:mt-12">
         <div className="max-w-4xl mx-auto animate-fade-in">
           <h1 className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-bold text-white mb-6 leading-tight">
             Empower Your Restaurant with{" "}

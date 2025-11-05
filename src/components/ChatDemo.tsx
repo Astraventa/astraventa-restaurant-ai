@@ -2,6 +2,8 @@ import { useState, useEffect, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Send, Bot, User } from "lucide-react";
+import { createSupabaseForClient } from "@/lib/supabase";
+import { useClientId } from "@/hooks/use-client-id";
 
 interface Message {
   role: "user" | "assistant";
@@ -13,6 +15,8 @@ const ChatDemo = () => {
   const [input, setInput] = useState("");
   const [isTyping, setIsTyping] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const clientId = useClientId();
+  const [conversationId, setConversationId] = useState<string | null>(null);
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -23,6 +27,19 @@ const ChatDemo = () => {
   }, [messages]);
 
   useEffect(() => {
+    // Ensure a conversation exists
+    const ensureConversation = async () => {
+      if (!clientId || conversationId) return;
+      const sb = createSupabaseForClient(clientId);
+      const { data, error } = await sb
+        .from("conversations")
+        .insert([{ client_id: clientId, channel: "web" }])
+        .select("id")
+        .single();
+      if (!error && data?.id) setConversationId(data.id);
+    };
+    ensureConversation();
+
     // Show initial demo conversation
     const demoMessages: Message[] = [
       { role: "user", content: "What's your signature dish?" },
@@ -35,7 +52,23 @@ const ChatDemo = () => {
     let index = 0;
     const interval = setInterval(() => {
       if (index < demoMessages.length && demoMessages[index]) {
-        setMessages((prev) => [...prev, demoMessages[index]]);
+        const m = demoMessages[index];
+        setMessages((prev) => [...prev, m]);
+        // Persist to Supabase if conversation exists
+        if (conversationId) {
+          const sb = createSupabaseForClient(clientId);
+          void sb
+            .from("messages")
+            .insert([
+              {
+                conversation_id: conversationId,
+                role: m.role,
+                content: m.content,
+                model: "demo-simulated",
+              },
+            ])
+            ;
+        }
         index++;
       } else {
         clearInterval(interval);
@@ -53,6 +86,17 @@ const ChatDemo = () => {
     setInput("");
     setIsTyping(true);
 
+    // Persist user message
+    if (conversationId) {
+      const sb = createSupabaseForClient(clientId);
+      void sb
+        .from("messages")
+        .insert([
+          { conversation_id: conversationId, role: "user", content: userMessage.content, model: "demo-simulated" },
+        ])
+        ;
+    }
+
     // Simulate AI response (will be replaced with actual API call)
     setTimeout(() => {
       const responses = [
@@ -67,6 +111,13 @@ const ChatDemo = () => {
         ...prev,
         { role: "assistant", content: randomResponse },
       ]);
+      if (conversationId) {
+        const sb = createSupabaseForClient(clientId);
+        void sb
+          .from("messages")
+          .insert([{ conversation_id: conversationId, role: "assistant", content: randomResponse, model: "demo-simulated" }])
+          ;
+      }
       setIsTyping(false);
     }, 1000);
   };
