@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -14,12 +14,30 @@ const Contact = () => {
     message: "",
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [status, setStatus] = useState<"idle" | "submitting" | "success" | "error">("idle");
+  const [errors, setErrors] = useState<{ name?: string; email?: string; message?: string }>({});
   const { toast } = useToast();
   const clientId = useClientId();
 
+  const isDisabled = useMemo(() => status === "submitting" || status === "success", [status]);
+
+  const validate = () => {
+    const next: { name?: string; email?: string; message?: string } = {};
+    if (!formData.name || formData.name.trim().length < 2) next.name = "Please enter your full name.";
+    if (formData.name.trim().length > 100) next.name = "Name is too long.";
+    const emailRe = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/i;
+    if (!emailRe.test(formData.email)) next.email = "Please enter a valid email address.";
+    if (!formData.message || formData.message.trim().length < 10) next.message = "Message must be at least 10 characters.";
+    if (formData.message.trim().length > 2000) next.message = "Message is too long (max 2000 characters).";
+    setErrors(next);
+    return Object.keys(next).length === 0;
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!validate()) return;
     setIsSubmitting(true);
+    setStatus("submitting");
     try {
       const sb = createSupabaseForClient(clientId || undefined);
       const { error } = await sb
@@ -56,14 +74,13 @@ const Contact = () => {
         console.warn("send-contact-email failed", e);
       }
 
-      toast({
-        title: "Message sent!",
-        description: "We'll get back to you within 24 hours.",
-      });
+      toast({ title: "Message sent!", description: "We’ll get back to you within 24 hours." });
+      setStatus("success");
       setFormData({ name: "", email: "", message: "" });
     } catch (err) {
       console.error(err);
       toast({ title: "Something went wrong", description: "Please try again later.", variant: "destructive" });
+      setStatus("error");
     } finally {
       setIsSubmitting(false);
     }
@@ -87,9 +104,23 @@ const Contact = () => {
           </p>
         </div>
 
+        {status === "submitting" && (
+          <div className="mb-6">
+            <div className="h-1 w-full bg-muted rounded">
+              <div className="h-1 w-1/3 bg-primary rounded animate-pulse" style={{ animationDuration: "1s" }}></div>
+            </div>
+          </div>
+        )}
+
         <div className="max-w-6xl mx-auto grid grid-cols-1 lg:grid-cols-2 gap-12">
           {/* Contact Form */}
           <div className="animate-slide-up">
+            {status === "success" ? (
+              <div className="space-y-4 p-8 rounded-3xl border border-primary/20 bg-gradient-to-br from-primary/5 to-accent/10 shadow-glow">
+                <h4 className="text-2xl font-bold">Thank you!</h4>
+                <p className="text-muted-foreground">Your message has been delivered. Our team will reach out within 24 hours.</p>
+              </div>
+            ) : (
             <form onSubmit={handleSubmit} className="space-y-6">
               <div>
                 <label htmlFor="name" className="block text-sm font-medium mb-2">
@@ -99,11 +130,13 @@ const Contact = () => {
                   id="name"
                   name="name"
                   value={formData.name}
-                  onChange={handleChange}
+                  onChange={(e) => { setFormData({ ...formData, name: e.target.value }); if (errors.name) setErrors({ ...errors, name: undefined }); }}
                   required
+                  disabled={isDisabled}
                   placeholder="John Doe"
                   className="rounded-xl"
                 />
+                {errors.name && <p className="mt-2 text-sm text-destructive">{errors.name}</p>}
               </div>
 
               <div>
@@ -115,11 +148,13 @@ const Contact = () => {
                   name="email"
                   type="email"
                   value={formData.email}
-                  onChange={handleChange}
+                  onChange={(e) => { setFormData({ ...formData, email: e.target.value }); if (errors.email) setErrors({ ...errors, email: undefined }); }}
                   required
+                  disabled={isDisabled}
                   placeholder="john@restaurant.com"
                   className="rounded-xl"
                 />
+                {errors.email && <p className="mt-2 text-sm text-destructive">{errors.email}</p>}
               </div>
 
               <div>
@@ -130,22 +165,25 @@ const Contact = () => {
                   id="message"
                   name="message"
                   value={formData.message}
-                  onChange={handleChange}
+                  onChange={(e) => { setFormData({ ...formData, message: e.target.value }); if (errors.message) setErrors({ ...errors, message: undefined }); }}
                   required
+                  disabled={isDisabled}
                   placeholder="Tell us about your restaurant and how we can help..."
                   rows={6}
                   className="rounded-xl resize-none"
                 />
+                {errors.message && <p className="mt-2 text-sm text-destructive">{errors.message}</p>}
               </div>
 
               <Button
                 type="submit"
-                disabled={isSubmitting}
+                disabled={isDisabled}
                 className="w-full bg-gradient-gold hover:opacity-90 transition-opacity shadow-glow text-base py-6 font-semibold"
               >
-                {isSubmitting ? "Sending..." : "Send Message"}
+                {status === "submitting" ? "Sending..." : status === "success" ? "Delivered" : "Send Message"}
               </Button>
             </form>
+            )}
           </div>
 
           {/* Contact Info */}

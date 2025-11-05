@@ -92,34 +92,61 @@ const ChatDemo = () => {
       void sb
         .from("messages")
         .insert([
-          { conversation_id: conversationId, role: "user", content: userMessage.content, model: "demo-simulated" },
+          { conversation_id: conversationId, role: "user", content: userMessage.content, model: "user-input" },
         ])
         ;
     }
 
-    // Simulate AI response (will be replaced with actual API call)
-    setTimeout(() => {
-      const responses = [
-        "I'd be delighted to help! Our wine list features over 100 carefully curated selections from Italy and France.",
-        "Excellent choice! Our chef recommends pairing that with our house-made pasta. Shall I reserve a table for you?",
-        "We're open Tuesday-Sunday, 5 PM to 11 PM. Would you like to book a table for a specific date?",
-        "Perfect! I can arrange that for you. Our terrace offers stunning sunset views. What time would work best?",
-      ];
-      
-      const randomResponse = responses[Math.floor(Math.random() * responses.length)];
-      setMessages((prev) => [
-        ...prev,
-        { role: "assistant", content: randomResponse },
-      ]);
+    try {
+      const sb = createSupabaseForClient(clientId);
+      const conversationHistory: Message[] = messages.slice(-6);
+      const { data, error } = await sb.functions.invoke("chat-ai", {
+        body: {
+          messages: [...conversationHistory, userMessage].map(m => ({ role: m.role, content: m.content })),
+          conversation_id: conversationId,
+        },
+      });
+
+      if (error) throw error;
+
+      const aiResponse = (data as any)?.content || (data as any)?.fallback || "I apologize, but I'm having trouble processing that right now. Could you please rephrase your question?";
+      const model = (data as any)?.model || "unknown";
+
+      const assistantMessage: Message = { role: "assistant", content: aiResponse };
+      setMessages((prev) => [...prev, assistantMessage]);
+
       if (conversationId) {
         const sb = createSupabaseForClient(clientId);
         void sb
           .from("messages")
-          .insert([{ conversation_id: conversationId, role: "assistant", content: randomResponse, model: "demo-simulated" }])
+          .insert([
+            {
+              conversation_id: conversationId,
+              role: "assistant",
+              content: aiResponse,
+              model: model,
+              latency_ms: (data as any)?.latency || null,
+            },
+          ])
           ;
       }
+    } catch (e) {
+      console.error("AI chat error:", e);
+      const fallbackMessage: Message = {
+        role: "assistant",
+        content: "I'd be delighted to help! Our signature dish is the Truffle Risotto with seared scallops. Would you like to reserve a table?",
+      };
+      setMessages((prev) => [...prev, fallbackMessage]);
+      if (conversationId) {
+        const sb = createSupabaseForClient(clientId);
+        void sb
+          .from("messages")
+          .insert([{ conversation_id: conversationId, role: "assistant", content: fallbackMessage.content, model: "fallback" }])
+          ;
+      }
+    } finally {
       setIsTyping(false);
-    }, 1000);
+    }
   };
 
   return (
