@@ -21,7 +21,15 @@ function json(body: unknown, status = 200) {
   });
 }
 
-const RESTAURANT_SYSTEM_PROMPT = `You are a friendly, professional AI assistant for "La Bella Vista" restaurant. You help customers with:
+const RESTAURANT_SYSTEM_PROMPT = `You are a friendly, professional AI assistant for "La Bella Vista" restaurant. Stay strictly on restaurant-related topics (menu, reservations, hours, location, dietary needs, events, promos). If users ask unrelated questions (e.g., programming, personal matters), politely steer the conversation back to restaurant assistance.
+
+Rules:
+- Never reveal internal reasoning, chain-of-thought, or tags like <think> … </think>.
+- Keep responses under 150 words unless detailed info is requested.
+- Be concise, warm, and helpful.
+- If the user speaks Urdu/Hindi, reply in that language; otherwise reply in English.
+
+You help customers with:
 - Menu inquiries and recommendations
 - Reservation bookings
 - Hours and location information
@@ -29,7 +37,20 @@ const RESTAURANT_SYSTEM_PROMPT = `You are a friendly, professional AI assistant 
 - Dietary restrictions and allergies
 - Wine pairings and chef recommendations
 
-Be warm, helpful, and concise. Always offer to help with reservations when appropriate. If asked about pricing, mention it's available on request or in the menu. Keep responses restaurant-focused and under 150 words unless detailed information is specifically requested.`;
+Always offer to help with reservations when appropriate. If asked about pricing, mention it's available on request or in the menu.`;
+
+function cleanContent(text: string | undefined): string {
+  if (!text) return "";
+  try {
+    // Remove any leaked chain-of-thought tags
+    let out = text.replace(/<think>[\s\S]*?<\/think>/gi, "");
+    // Collapse excessive whitespace
+    out = out.replace(/\n{3,}/g, "\n\n").trim();
+    return out;
+  } catch {
+    return text;
+  }
+}
 
 async function callGroq(messages: ChatMessage[]): Promise<{ content: string; model: string; latency?: number } | null> {
   const apiKey = Deno.env.get("GROQ_API_KEY");
@@ -60,7 +81,7 @@ async function callGroq(messages: ChatMessage[]): Promise<{ content: string; mod
     const data = await res.json();
     const latency = Date.now() - start;
     return {
-      content: data.choices?.[0]?.message?.content?.trim() || "",
+      content: cleanContent(data.choices?.[0]?.message?.content)?.trim() || "",
       model: "llama-3.1-70b",
       latency,
     };
@@ -101,7 +122,7 @@ async function callOpenRouter(messages: ChatMessage[]): Promise<{ content: strin
     const data = await res.json();
     const latency = Date.now() - start;
     return {
-      content: data.choices?.[0]?.message?.content?.trim() || "",
+      content: cleanContent(data.choices?.[0]?.message?.content)?.trim() || "",
       model: "llama-3.3-8b",
       latency,
     };
@@ -141,7 +162,7 @@ async function callHuggingFaceRouter(messages: ChatMessage[]): Promise<{ content
     const data = await res.json();
     const latency = Date.now() - start;
     return {
-      content: data.choices?.[0]?.message?.content?.trim() || "",
+      content: cleanContent(data.choices?.[0]?.message?.content)?.trim() || "",
       model: "minimax-m2-router",
       latency,
     };
