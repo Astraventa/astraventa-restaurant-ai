@@ -1,73 +1,126 @@
-# Welcome to your Lovable project
+# Astraventa Restaurant AI
 
-## Project info
+A production-ready demo web application showcasing AI-powered chatbots and booking automation for restaurants. Built with modern web technologies and deployed on Vercel.
 
-**URL**: https://lovable.dev/projects/7ea1b560-5a2c-4905-a42b-933d40229539
+## 🚀 Live Demo
 
-## How can I edit this code?
+**URL**: https://astraventa-restaurant-ai.vercel.app
 
-There are several ways of editing your application.
+## ✨ Features
 
-**Use Lovable**
+- **AI-Powered Chatbot**: Multi-provider fallback system (Groq, OpenRouter, Hugging Face) for reliable restaurant assistance
+- **Contact Form**: Email notifications via Resend API with Supabase storage
+- **Responsive Design**: Modern, premium UI with Tailwind CSS and shadcn/ui
+- **Real-time Chat**: Conversation history stored in Supabase with automatic fallback handling
+- **WhatsApp Integration**: Floating button for direct customer contact
 
-Simply visit the [Lovable Project](https://lovable.dev/projects/7ea1b560-5a2c-4905-a42b-933d40229539) and start prompting.
+## 🛠️ Tech Stack
 
-Changes made via Lovable will be committed automatically to this repo.
+- **Frontend**: React 18 + TypeScript + Vite
+- **UI**: Tailwind CSS + shadcn/ui (Radix UI components)
+- **Backend**: Supabase (PostgreSQL + Edge Functions)
+- **AI Models**: Groq (Llama 3.1 70B), OpenRouter (Llama 3.3 8B), Hugging Face
+- **Email**: Resend API
+- **Deployment**: Vercel
 
-**Use your preferred IDE**
+## 📦 Installation
 
-If you want to work locally using your own IDE, you can clone this repo and push changes. Pushed changes will also be reflected in Lovable.
+### Prerequisites
 
-The only requirement is having Node.js & npm installed - [install with nvm](https://github.com/nvm-sh/nvm#installing-and-updating)
+- Node.js 18+ and npm
+- Supabase account
+- API keys for AI providers (see `AI_SETUP.md`)
 
-Follow these steps:
+### Setup
 
-```sh
-# Step 1: Clone the repository using the project's Git URL.
-git clone <YOUR_GIT_URL>
+```bash
+# Clone the repository
+git clone https://github.com/Astraventa/astraventa-restaurant-ai.git
+cd astraventa-restaurant-ai
 
-# Step 2: Navigate to the project directory.
-cd <YOUR_PROJECT_NAME>
+# Install dependencies
+npm install
 
-# Step 3: Install the necessary dependencies.
-npm i
+# Create .env file
+cp ENV.example .env
 
-# Step 4: Start the development server with auto-reloading and an instant preview.
+# Add your Supabase credentials
+VITE_SUPABASE_URL=your_supabase_url
+VITE_SUPABASE_ANON_KEY=your_supabase_anon_key
+
+# Start development server
 npm run dev
 ```
 
-**Edit a file directly in GitHub**
+## 🔧 Configuration
 
-- Navigate to the desired file(s).
-- Click the "Edit" button (pencil icon) at the top right of the file view.
-- Make your changes and commit the changes.
+### Supabase Setup
 
-**Use GitHub Codespaces**
+1. Run the SQL schema: `supabase/schema.sql`
+2. Deploy Edge Functions:
+   ```bash
+   npx supabase functions deploy send-contact-email
+   npx supabase functions deploy chat-ai
+   ```
+3. Set secrets (see `API_KEYS_SETUP.md`):
+   ```bash
+   npx supabase secrets set GROQ_API_KEY=your_key
+   npx supabase secrets set OPENROUTER_API_KEY=your_key
+   npx supabase secrets set RESEND_API_KEY=your_key
+   # ... etc
+   ```
 
-- Navigate to the main page of your repository.
-- Click on the "Code" button (green button) near the top right.
-- Select the "Codespaces" tab.
-- Click on "New codespace" to launch a new Codespace environment.
-- Edit files directly within the Codespace and commit and push your changes once you're done.
+### Environment Variables
 
-## What technologies are used for this project?
+**Frontend (Vercel)**:
+- `VITE_SUPABASE_URL`
+- `VITE_SUPABASE_ANON_KEY`
 
-This project is built with:
+**Supabase Functions** (set via CLI):
+- `GROQ_API_KEY`
+- `OPENROUTER_API_KEY`
+- `HF_TOKEN` (optional)
+- `HUGGINGFACE_API_KEY` (optional)
+- `RESEND_API_KEY`
+- `RESEND_FROM`
+- `RESEND_TO`
+- `CORS_ORIGIN`
 
-- Vite
-- TypeScript
-- React
-- shadcn-ui
-- Tailwind CSS
+## 📚 Documentation
 
-## How can I deploy this project?
+- `AI_SETUP.md` - Guide for setting up AI model APIs
+- `API_KEYS_SETUP.md` - Detailed API key configuration
+- `supabase/schema.sql` - Database schema
 
-Simply open [Lovable](https://lovable.dev/projects/7ea1b560-5a2c-4905-a42b-933d40229539) and click on Share -> Publish.
+## 🚀 Deployment
 
-## Can I connect a custom domain to my Lovable project?
+### Vercel
 
-Yes, you can!
+1. Connect your GitHub repository to Vercel
+2. Add environment variables in Vercel dashboard:
+   - `VITE_SUPABASE_URL`
+   - `VITE_SUPABASE_ANON_KEY`
+3. Deploy automatically on push to `main`
 
-To connect a domain, navigate to Project > Settings > Domains and click Connect Domain.
+### Supabase Functions
 
-Read more here: [Setting up a custom domain](https://docs.lovable.dev/features/custom-domain#custom-domain)
+Deploy Edge Functions separately:
+```bash
+npx supabase functions deploy send-contact-email
+npx supabase functions deploy chat-ai
+```
+
+## 📝 Scripts
+
+- `npm run dev` - Start development server
+- `npm run build` - Build for production
+- `npm run lint` - Run ESLint
+- `npm run preview` - Preview production build
+
+## 🤝 Contributing
+
+This is a demo project for Astraventa AI. For inquiries, contact: astraventaai@gmail.com
+
+## 📄 License
+
+© 2025 Astraventa AI. All rights reserved.
