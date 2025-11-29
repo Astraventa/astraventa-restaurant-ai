@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Send, Bot, User, Mic, MicOff } from "lucide-react";
+import { Send, Bot, User, Mic, MicOff, Volume2, VolumeX } from "lucide-react";
 import { createSupabaseForClient } from "@/lib/supabase";
 import { useClientId } from "@/hooks/use-client-id";
 
@@ -51,8 +51,11 @@ const ChatDemo = () => {
   const [input, setInput] = useState("");
   const [isTyping, setIsTyping] = useState(false);
   const [isListening, setIsListening] = useState(false);
+  const [isSpeaking, setIsSpeaking] = useState(false);
+  const [ttsEnabled, setTtsEnabled] = useState(true);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const recognitionRef = useRef<SpeechRecognition | null>(null);
+  const synthesisRef = useRef<SpeechSynthesis | null>(null);
   const clientId = useClientId();
   const [conversationId, setConversationId] = useState<string | null>(null);
 
@@ -60,9 +63,77 @@ const ChatDemo = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   };
 
+  // Text-to-Speech function (100% free, browser-based)
+  const speakText = (text: string) => {
+    if (!ttsEnabled || typeof window === "undefined") return;
+    
+    const synthesis = window.speechSynthesis;
+    if (!synthesis) {
+      console.warn("Speech synthesis not supported");
+      return;
+    }
+
+    // Stop any ongoing speech
+    synthesis.cancel();
+
+    // Create utterance with optimized settings for fast, natural speech
+    const utterance = new SpeechSynthesisUtterance(text);
+    utterance.rate = 1.1; // Slightly faster (0.1-10, default 1)
+    utterance.pitch = 1.0; // Natural pitch (0-2, default 1)
+    utterance.volume = 0.9; // Slightly lower volume (0-1, default 1)
+    
+    // Try to use a natural-sounding voice
+    const voices = synthesis.getVoices();
+    const preferredVoice = voices.find(v => 
+      v.name.includes("Google") || 
+      v.name.includes("Microsoft") || 
+      v.name.includes("Samantha") ||
+      v.lang.startsWith("en")
+    );
+    if (preferredVoice) {
+      utterance.voice = preferredVoice;
+    }
+
+    utterance.onstart = () => setIsSpeaking(true);
+    utterance.onend = () => setIsSpeaking(false);
+    utterance.onerror = () => setIsSpeaking(false);
+
+    synthesis.speak(utterance);
+  };
+
+  const stopSpeaking = () => {
+    if (typeof window !== "undefined" && window.speechSynthesis) {
+      window.speechSynthesis.cancel();
+      setIsSpeaking(false);
+    }
+  };
+
   useEffect(() => {
     scrollToBottom();
   }, [messages]);
+
+  // Load voices and cleanup TTS on unmount
+  useEffect(() => {
+    if (typeof window !== "undefined" && window.speechSynthesis) {
+      // Load voices (some browsers need this)
+      const loadVoices = () => {
+        const voices = window.speechSynthesis.getVoices();
+        synthesisRef.current = window.speechSynthesis;
+      };
+      
+      loadVoices();
+      if (window.speechSynthesis.onvoiceschanged !== undefined) {
+        window.speechSynthesis.onvoiceschanged = loadVoices;
+      }
+
+      return () => {
+        // Stop any ongoing speech when component unmounts
+        if (window.speechSynthesis) {
+          window.speechSynthesis.cancel();
+        }
+      };
+    }
+  }, []);
 
   useEffect(() => {
     // Ensure a conversation exists
@@ -118,6 +189,9 @@ const ChatDemo = () => {
 
   const handleSend = async () => {
     if (!input.trim()) return;
+
+    // Stop any ongoing speech when user sends new message
+    stopSpeaking();
 
     const userMessage: Message = { role: "user", content: input };
     setMessages((prev) => [...prev, userMessage]);
@@ -185,6 +259,11 @@ const ChatDemo = () => {
 
       const assistantMessage: Message = { role: "assistant", content: aiResponse };
       setMessages((prev) => [...prev, assistantMessage]);
+
+      // Auto-speak AI response (if TTS enabled) - FREE browser TTS
+      if (ttsEnabled) {
+        setTimeout(() => speakText(aiResponse), 300); // Small delay for better UX
+      }
 
       if (conversationId) {
         const sb = createSupabaseForClient(clientId);
@@ -383,6 +462,11 @@ const ChatDemo = () => {
       const assistantMessage: Message = { role: "assistant", content: aiResponse };
       setMessages((prev) => [...prev, assistantMessage]);
 
+      // Auto-speak AI response (if TTS enabled)
+      if (ttsEnabled) {
+        setTimeout(() => speakText(aiResponse), 300);
+      }
+
       if (conversationId) {
         const sb = createSupabaseForClient(clientId);
         void sb
@@ -403,6 +487,9 @@ const ChatDemo = () => {
         content: "I'd be delighted to help! Our signature dish is the Truffle Risotto with seared scallops. Would you like to reserve a table?",
       };
       setMessages((prev) => [...prev, fallbackMessage]);
+      if (ttsEnabled) {
+        setTimeout(() => speakText(fallbackMessage.content), 300);
+      }
     } finally {
       setIsTyping(false);
     }
@@ -535,6 +622,25 @@ const ChatDemo = () => {
                   className="flex-1 rounded-full border-border focus:border-primary transition-colors"
                 />
                 <Button
+                  onClick={() => {
+                    if (isSpeaking) {
+                      stopSpeaking();
+                    } else {
+                      setTtsEnabled(!ttsEnabled);
+                    }
+                  }}
+                  size="icon"
+                  variant={ttsEnabled ? "default" : "outline"}
+                  className={`rounded-full transition-all shadow-soft w-12 h-12 ${
+                    ttsEnabled 
+                      ? "bg-primary hover:bg-primary/90 text-white" 
+                      : "hover:bg-muted border-2"
+                  } ${isSpeaking ? "animate-pulse" : ""}`}
+                  title={isSpeaking ? "Stop speaking" : ttsEnabled ? "Voice enabled - Click to disable" : "Voice disabled - Click to enable"}
+                >
+                  {isSpeaking ? <VolumeX size={20} /> : ttsEnabled ? <Volume2 size={20} /> : <VolumeX size={20} />}
+                </Button>
+                <Button
                   onClick={toggleVoiceInput}
                   size="icon"
                   variant={isListening ? "destructive" : "outline"}
@@ -556,11 +662,23 @@ const ChatDemo = () => {
                   <Send size={20} />
                 </Button>
               </div>
-              {isListening && (
-                <p className="mt-2 text-xs text-center text-muted-foreground animate-pulse">
-                  🎤 Listening... Speak now
-                </p>
-              )}
+              <div className="flex items-center justify-between mt-2">
+                {isListening && (
+                  <p className="text-xs text-center text-muted-foreground animate-pulse">
+                    🎤 Listening... Speak now
+                  </p>
+                )}
+                {isSpeaking && (
+                  <p className="text-xs text-center text-primary animate-pulse ml-auto">
+                    🔊 Speaking...
+                  </p>
+                )}
+                {!isListening && !isSpeaking && ttsEnabled && (
+                  <p className="text-xs text-muted-foreground ml-auto">
+                    🔊 Voice responses enabled
+                  </p>
+                )}
+              </div>
             </div>
           </div>
         </div>
