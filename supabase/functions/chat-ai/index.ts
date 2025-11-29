@@ -167,8 +167,16 @@ async function callHuggingFaceRouter(messages: ChatMessage[]): Promise<{ content
 
     const data = await res.json();
     const latency = Date.now() - start;
+    const content = cleanContent(data.choices?.[0]?.message?.content)?.trim() || "";
+    
+    // Skip if content is empty
+    if (!content) {
+      console.warn("HF Router returned empty content");
+      return null;
+    }
+    
     return {
-      content: cleanContent(data.choices?.[0]?.message?.content)?.trim() || "",
+      content,
       model: "minimax-m2-router",
       latency,
     };

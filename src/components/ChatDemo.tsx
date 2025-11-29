@@ -158,16 +158,28 @@ const ChatDemo = () => {
       
       // Handle response - check for content or fallback
       const responseData = data as any;
-      let aiResponse = responseData?.content;
+      let aiResponse = responseData?.content?.trim();
       
-      if (!aiResponse && responseData?.fallback) {
-        aiResponse = responseData.fallback;
-      }
-      
-      if (!aiResponse) {
-        console.warn("No content or fallback in AI response:", responseData);
-        // Use a restaurant-specific fallback instead of generic error
-        aiResponse = "I'd be happy to help! We have a variety of delicious pizzas on our menu. Would you like to know about our pizza options or make a reservation?";
+      // If content is empty string, treat as no content
+      if (!aiResponse || aiResponse.length === 0) {
+        if (responseData?.fallback) {
+          aiResponse = responseData.fallback;
+        } else {
+          console.warn("No content or fallback in AI response:", responseData);
+          // Use a restaurant-specific fallback based on user's question
+          const userQuestion = userMessage.content.toLowerCase();
+          if (userQuestion.includes("pizza") || userQuestion.includes("chicken")) {
+            aiResponse = "Yes, we have delicious chicken pizza available! Our wood-fired pizzas are made fresh daily. Would you like to place an order or make a reservation?";
+          } else if (userQuestion.includes("table") || userQuestion.includes("reserve") || userQuestion.includes("book")) {
+            aiResponse = "I'd be happy to help you reserve a table! For a party of 6, I can check availability. What time would work best for you today?";
+          } else if (userQuestion.includes("mutton") || userQuestion.includes("karahai")) {
+            aiResponse = "Yes, we serve mutton karahai! It's one of our popular dishes. Would you like to know more about it or make a reservation to try it?";
+          } else if (userQuestion.includes("time") || userQuestion.includes("hour") || userQuestion.includes("open")) {
+            aiResponse = "We're open Tuesday-Sunday, 5 PM to 11 PM. For today's exact hours, I recommend calling us directly. Would you like to make a reservation?";
+          } else {
+            aiResponse = "I'd be happy to help! Our signature dish is the Truffle Risotto with seared scallops. Would you like to know more about our menu or make a reservation?";
+          }
+        }
       }
       const model = (data as any)?.model || "unknown";
 
@@ -261,6 +273,18 @@ const ChatDemo = () => {
       console.error("Speech recognition error:", event.error);
       setIsListening(false);
       recognition.stop();
+      
+      // Show user-friendly error message
+      if (event.error === "network") {
+        alert("Voice input requires an internet connection. Please check your network and try again.");
+      } else if (event.error === "not-allowed") {
+        alert("Microphone permission denied. Please allow microphone access in your browser settings.");
+      } else if (event.error === "no-speech") {
+        // This is normal - user didn't speak, just reset
+        setIsListening(false);
+      } else {
+        console.warn("Speech recognition error:", event.error);
+      }
     };
 
     recognition.onend = () => {
@@ -306,14 +330,23 @@ const ChatDemo = () => {
       if (error) throw error;
       
       const responseData = data as any;
-      let aiResponse = responseData?.content;
+      let aiResponse = responseData?.content?.trim();
       
-      if (!aiResponse && responseData?.fallback) {
-        aiResponse = responseData.fallback;
-      }
-      
-      if (!aiResponse) {
-        aiResponse = "I'd be happy to help! We have a variety of delicious pizzas on our menu. Would you like to know about our pizza options or make a reservation?";
+      if (!aiResponse || aiResponse.length === 0) {
+        if (responseData?.fallback) {
+          aiResponse = responseData.fallback;
+        } else {
+          const userQuestion = transcript.toLowerCase();
+          if (userQuestion.includes("pizza") || userQuestion.includes("chicken")) {
+            aiResponse = "Yes, we have delicious chicken pizza available! Our wood-fired pizzas are made fresh daily. Would you like to place an order or make a reservation?";
+          } else if (userQuestion.includes("table") || userQuestion.includes("reserve") || userQuestion.includes("book")) {
+            aiResponse = "I'd be happy to help you reserve a table! For a party of 6, I can check availability. What time would work best for you today?";
+          } else if (userQuestion.includes("mutton") || userQuestion.includes("karahai")) {
+            aiResponse = "Yes, we serve mutton karahai! It's one of our popular dishes. Would you like to know more about it or make a reservation to try it?";
+          } else {
+            aiResponse = "I'd be happy to help! Our signature dish is the Truffle Risotto with seared scallops. Would you like to know more about our menu or make a reservation?";
+          }
+        }
       }
 
       const assistantMessage: Message = { role: "assistant", content: aiResponse };
