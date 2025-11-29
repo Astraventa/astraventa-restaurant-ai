@@ -246,7 +246,18 @@ const ChatDemo = () => {
     const recognition = new SpeechRecognition();
     recognition.continuous = false;
     recognition.interimResults = false;
-    recognition.lang = "en-US";
+    
+    // Detect browser and set language - Brave might need different handling
+    const isBrave = (navigator as any).brave?.isBrave || false;
+    const isChrome = /Chrome/.test(navigator.userAgent) && /Google Inc/.test(navigator.vendor);
+    
+    // Set language based on browser - try multiple languages for better compatibility
+    if (isBrave) {
+      // Brave might work better with explicit language codes
+      recognition.lang = navigator.language || "en-US";
+    } else {
+      recognition.lang = "en-US";
+    }
 
     recognition.onstart = () => {
       setIsListening(true);
@@ -274,16 +285,36 @@ const ChatDemo = () => {
       setIsListening(false);
       recognition.stop();
       
+      const isBrave = (navigator as any).brave?.isBrave || false;
+      const isHttps = window.location.protocol === "https:" || window.location.hostname === "localhost";
+      
       // Show user-friendly error message
       if (event.error === "network") {
-        alert("Voice input requires an internet connection. Please check your network and try again.");
+        if (isBrave && !isHttps) {
+          alert("Brave browser requires HTTPS for voice input. Please use the secure version of this site.");
+        } else {
+          alert("Voice input requires an internet connection. Please check your network and try again.");
+        }
       } else if (event.error === "not-allowed") {
-        alert("Microphone permission denied. Please allow microphone access in your browser settings.");
+        if (isBrave) {
+          alert("Brave browser: Please allow microphone access in Settings → Privacy and Security → Site Settings → Microphone, then refresh the page.");
+        } else {
+          alert("Microphone permission denied. Please allow microphone access in your browser settings.");
+        }
       } else if (event.error === "no-speech") {
         // This is normal - user didn't speak, just reset
         setIsListening(false);
+      } else if (event.error === "service-not-allowed") {
+        if (isBrave) {
+          alert("Brave browser: Speech recognition service is blocked. Please check Brave Shields settings and allow speech recognition.");
+        } else {
+          alert("Speech recognition service is not available. Please try again or use text input.");
+        }
       } else {
         console.warn("Speech recognition error:", event.error);
+        if (isBrave) {
+          alert(`Voice input error: ${event.error}. Brave browser may require additional permissions. Please check Brave Shields settings.`);
+        }
       }
     };
 
@@ -379,7 +410,16 @@ const ChatDemo = () => {
 
   const toggleVoiceInput = () => {
     if (!recognitionRef.current) {
-      alert("Voice recognition is not supported in your browser. Please use Chrome or Edge.");
+      alert("Voice recognition is not supported in your browser. Please use Chrome, Edge, or enable it in Brave settings.");
+      return;
+    }
+
+    const isBrave = (navigator as any).brave?.isBrave || false;
+    const isHttps = window.location.protocol === "https:" || window.location.hostname === "localhost";
+    
+    // Pre-check for Brave browser
+    if (isBrave && !isHttps) {
+      alert("Brave browser requires HTTPS for voice input. Please use the secure (https://) version of this site.");
       return;
     }
 
@@ -387,7 +427,19 @@ const ChatDemo = () => {
       recognitionRef.current.stop();
       setIsListening(false);
     } else {
-      recognitionRef.current.start();
+      // Request microphone permission first (helps with Brave)
+      navigator.mediaDevices.getUserMedia({ audio: true })
+        .then(() => {
+          recognitionRef.current?.start();
+        })
+        .catch((err) => {
+          console.error("Microphone permission error:", err);
+          if (isBrave) {
+            alert("Brave browser: Please allow microphone access in Settings → Privacy and Security → Site Settings → Microphone.");
+          } else {
+            alert("Microphone permission is required for voice input. Please allow access and try again.");
+          }
+        });
     }
   };
 
