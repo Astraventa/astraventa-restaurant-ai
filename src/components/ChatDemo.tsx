@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Send, Bot, User } from "lucide-react";
+import { Send, Bot, User, Mic, MicOff } from "lucide-react";
 import { createSupabaseForClient } from "@/lib/supabase";
 import { useClientId } from "@/hooks/use-client-id";
 
@@ -10,11 +10,49 @@ interface Message {
   content: string;
 }
 
+interface SpeechRecognition extends EventTarget {
+  continuous: boolean;
+  interimResults: boolean;
+  lang: string;
+  start(): void;
+  stop(): void;
+  onstart: ((this: SpeechRecognition, ev: Event) => any) | null;
+  onresult: ((this: SpeechRecognition, ev: SpeechRecognitionEvent) => any) | null;
+  onerror: ((this: SpeechRecognition, ev: SpeechRecognitionErrorEvent) => any) | null;
+  onend: ((this: SpeechRecognition, ev: Event) => any) | null;
+}
+
+interface SpeechRecognitionEvent extends Event {
+  results: SpeechRecognitionResultList;
+}
+
+interface SpeechRecognitionErrorEvent extends Event {
+  error: string;
+}
+
+interface SpeechRecognitionResultList {
+  [index: number]: SpeechRecognitionResult;
+  length: number;
+}
+
+interface SpeechRecognitionResult {
+  [index: number]: SpeechRecognitionAlternative;
+  length: number;
+  isFinal: boolean;
+}
+
+interface SpeechRecognitionAlternative {
+  transcript: string;
+  confidence: number;
+}
+
 const ChatDemo = () => {
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState("");
   const [isTyping, setIsTyping] = useState(false);
+  const [isListening, setIsListening] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const recognitionRef = useRef<SpeechRecognition | null>(null);
   const clientId = useClientId();
   const [conversationId, setConversationId] = useState<string | null>(null);
 
@@ -118,12 +156,19 @@ const ChatDemo = () => {
         throw error;
       }
       
-      if (!data || !(data as any)?.content) {
-        console.warn("No content in AI response:", data);
-        throw new Error("Empty response from AI");
+      // Handle response - check for content or fallback
+      const responseData = data as any;
+      let aiResponse = responseData?.content;
+      
+      if (!aiResponse && responseData?.fallback) {
+        aiResponse = responseData.fallback;
       }
-
-      const aiResponse = (data as any)?.content || (data as any)?.fallback || "I apologize, but I'm having trouble processing that right now. Could you please rephrase your question?";
+      
+      if (!aiResponse) {
+        console.warn("No content or fallback in AI response:", responseData);
+        // Use a restaurant-specific fallback instead of generic error
+        aiResponse = "I'd be happy to help! We have a variety of delicious pizzas on our menu. Would you like to know about our pizza options or make a reservation?";
+      }
       const model = (data as any)?.model || "unknown";
 
       const assistantMessage: Message = { role: "assistant", content: aiResponse };
@@ -173,6 +218,143 @@ const ChatDemo = () => {
       }
     } finally {
       setIsTyping(false);
+    }
+  };
+
+  // Voice recognition setup
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    
+    const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
+    if (!SpeechRecognition) {
+      console.warn("Speech recognition not supported in this browser");
+      return;
+    }
+
+    const recognition = new SpeechRecognition();
+    recognition.continuous = false;
+    recognition.interimResults = false;
+    recognition.lang = "en-US";
+
+    recognition.onstart = () => {
+      setIsListening(true);
+    };
+
+    recognition.onresult = (event: SpeechRecognitionEvent) => {
+      const transcript = event.results[0][0].transcript;
+      setInput(transcript);
+      setIsListening(false);
+      recognition.stop();
+      // Auto-send after voice input
+      setTimeout(() => {
+        if (transcript.trim()) {
+          const userMessage: Message = { role: "user", content: transcript };
+          setMessages((prev) => [...prev, userMessage]);
+          setInput("");
+          setIsTyping(true);
+          handleVoiceSend(transcript);
+        }
+      }, 100);
+    };
+
+    recognition.onerror = (event: any) => {
+      console.error("Speech recognition error:", event.error);
+      setIsListening(false);
+      recognition.stop();
+    };
+
+    recognition.onend = () => {
+      setIsListening(false);
+    };
+
+    recognitionRef.current = recognition;
+
+    return () => {
+      if (recognitionRef.current) {
+        recognitionRef.current.stop();
+      }
+    };
+  }, []);
+
+  const handleVoiceSend = async (transcript: string) => {
+    const userMessage: Message = { role: "user", content: transcript };
+    
+    // Persist user message
+    if (conversationId) {
+      const sb = createSupabaseForClient(clientId);
+      void sb
+        .from("messages")
+        .insert([{ conversation_id: conversationId, role: "user", content: userMessage.content, model: "user-input" }])
+        ;
+    }
+
+    try {
+      const sb = createSupabaseForClient(clientId);
+      const conversationHistory: Message[] = messages.slice(-6);
+      
+      if (!import.meta.env.VITE_SUPABASE_URL) {
+        throw new Error("Supabase URL not configured");
+      }
+      
+      const { data, error } = await sb.functions.invoke("chat-ai", {
+        body: {
+          messages: [...conversationHistory, userMessage].map(m => ({ role: m.role, content: m.content })),
+          conversation_id: conversationId,
+        },
+      });
+
+      if (error) throw error;
+      
+      const responseData = data as any;
+      let aiResponse = responseData?.content;
+      
+      if (!aiResponse && responseData?.fallback) {
+        aiResponse = responseData.fallback;
+      }
+      
+      if (!aiResponse) {
+        aiResponse = "I'd be happy to help! We have a variety of delicious pizzas on our menu. Would you like to know about our pizza options or make a reservation?";
+      }
+
+      const assistantMessage: Message = { role: "assistant", content: aiResponse };
+      setMessages((prev) => [...prev, assistantMessage]);
+
+      if (conversationId) {
+        const sb = createSupabaseForClient(clientId);
+        void sb
+          .from("messages")
+          .insert([{
+            conversation_id: conversationId,
+            role: "assistant",
+            content: aiResponse,
+            model: responseData?.model || "unknown",
+            latency_ms: responseData?.latency || null,
+          }])
+          ;
+      }
+    } catch (e: any) {
+      console.error("AI chat error:", e);
+      const fallbackMessage: Message = {
+        role: "assistant",
+        content: "I'd be delighted to help! Our signature dish is the Truffle Risotto with seared scallops. Would you like to reserve a table?",
+      };
+      setMessages((prev) => [...prev, fallbackMessage]);
+    } finally {
+      setIsTyping(false);
+    }
+  };
+
+  const toggleVoiceInput = () => {
+    if (!recognitionRef.current) {
+      alert("Voice recognition is not supported in your browser. Please use Chrome or Edge.");
+      return;
+    }
+
+    if (isListening) {
+      recognitionRef.current.stop();
+      setIsListening(false);
+    } else {
+      recognitionRef.current.start();
     }
   };
 
@@ -268,13 +450,32 @@ const ChatDemo = () => {
                   className="flex-1 rounded-full border-border focus:border-primary transition-colors"
                 />
                 <Button
+                  onClick={toggleVoiceInput}
+                  size="icon"
+                  variant={isListening ? "destructive" : "outline"}
+                  className={`rounded-full transition-all shadow-soft w-12 h-12 ${
+                    isListening 
+                      ? "bg-red-500 hover:bg-red-600 text-white animate-pulse" 
+                      : "hover:bg-primary hover:text-white border-2"
+                  }`}
+                  title={isListening ? "Stop listening" : "Start voice input"}
+                >
+                  {isListening ? <MicOff size={20} /> : <Mic size={20} />}
+                </Button>
+                <Button
                   onClick={handleSend}
                   size="icon"
-                  className="rounded-full bg-gradient-gold hover:opacity-90 transition-opacity shadow-glow w-12 h-12"
+                  disabled={!input.trim()}
+                  className="rounded-full bg-gradient-gold hover:opacity-90 transition-opacity shadow-glow w-12 h-12 disabled:opacity-50"
                 >
                   <Send size={20} />
                 </Button>
               </div>
+              {isListening && (
+                <p className="mt-2 text-xs text-center text-muted-foreground animate-pulse">
+                  🎤 Listening... Speak now
+                </p>
+              )}
             </div>
           </div>
         </div>

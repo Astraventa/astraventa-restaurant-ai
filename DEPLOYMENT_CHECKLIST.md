@@ -37,9 +37,9 @@ In Vercel Dashboard → Your Project → Settings → Environment Variables:
 The function needs these secrets (set via CLI):
 
 ```bash
-npx supabase secrets set GROQ_API_KEY=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
-npx supabase secrets set OPENROUTER_API_KEY=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
-npx supabase secrets set RESEND_API_KEY=re_CDQcfX8S_KLKwPtn9gzgTjyqNXw47GqUD
+npx supabase secrets set GROQ_API_KEY=your_groq_api_key_here
+npx supabase secrets set OPENROUTER_API_KEY=your_openrouter_api_key_here
+npx supabase secrets set RESEND_API_KEY=your_resend_api_key_here
 npx supabase secrets set RESEND_FROM=notifications@cavexa.online
 npx supabase secrets set RESEND_TO=astraventaai@gmail.com
 npx supabase secrets set CORS_ORIGIN=https://astraventa-restaurant-ai.vercel.app
