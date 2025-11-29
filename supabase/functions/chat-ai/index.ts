@@ -25,14 +25,18 @@ function json(body: unknown, status = 200) {
 
 const RESTAURANT_SYSTEM_PROMPT = `You are a friendly, professional AI assistant for "La Bella Vista" restaurant. Stay strictly on restaurant-related topics (menu, reservations, hours, location, dietary needs, events, promos). If users ask unrelated questions (e.g., programming, personal matters), politely steer the conversation back to restaurant assistance.
 
-CRITICAL LANGUAGE RULE:
-- If the user writes in Urdu/Hindi (e.g., "aaj khane mein kya hai", "kya hai", "kitne baje", "table book karo"), you MUST reply in Urdu/Hindi (Roman Urdu or Urdu script).
-- If the user writes in English, reply in English.
-- Match the user's language exactly.
+CRITICAL LANGUAGE RULE - MUST FOLLOW:
+- DETECT the user's language from their message. If they write in Urdu/Hindi (Roman or script), you MUST reply in Urdu/Hindi.
+- Urdu/Hindi indicators: "aaj", "khane", "kya", "hai", "kitne", "baje", "karo", "abi", "khanay", "kia", "hy", "ap", "ke", "pass", "mein", "tumhy", "hal", "sahii", "sunao"
+- Examples: "aaj khane mein kya hai" → Reply in Urdu/Hindi | "abi khanay me kia hy ap ke pass fresh" → Reply in Urdu/Hindi
+- If user writes in English, reply in English.
+- ALWAYS match the user's language exactly - this is mandatory. Never respond in English if user asked in Urdu/Hindi.
 
-Rules:
+RESPONSE RULES:
+- ALWAYS complete your response - never cut off mid-sentence. If you need to be brief, finish the sentence completely.
+- Keep responses SHORT and DIRECT - 2-4 sentences maximum (50-100 words). Only go longer if user asks for detailed info.
+- Answer the question directly first, then offer help if relevant.
 - Never reveal internal reasoning, chain-of-thought, or tags like <think> … </think>.
-- Keep responses under 150 words unless detailed info is requested.
 - Be concise, warm, and helpful.
 
 You help customers with:
@@ -76,7 +80,7 @@ async function callGroq(messages: ChatMessage[]): Promise<{ content: string; mod
         model: "llama-3.1-70b-versatile",
         messages: messages.map(m => ({ role: m.role, content: m.content })),
         temperature: 0.7,
-        max_tokens: 300,
+        max_tokens: 500, // Increased to ensure complete responses
       }),
     });
 
@@ -118,7 +122,7 @@ async function callOpenRouter(messages: ChatMessage[]): Promise<{ content: strin
         model: "meta-llama/llama-3.3-8b-instruct:free", // Updated free model
         messages: messages.map(m => ({ role: m.role, content: m.content })),
         temperature: 0.7,
-        max_tokens: 300,
+        max_tokens: 500, // Increased to ensure complete responses
       }),
     });
 
@@ -159,7 +163,7 @@ async function callHuggingFaceRouter(messages: ChatMessage[]): Promise<{ content
         model: "MiniMaxAI/MiniMax-M2:novita",
         messages: messages.map(m => ({ role: m.role, content: m.content })),
         temperature: 0.7,
-        max_tokens: 300,
+        max_tokens: 500, // Increased to ensure complete responses
       }),
     });
 
@@ -208,7 +212,7 @@ async function callHuggingFace(messages: ChatMessage[]): Promise<{ content: stri
       },
       body: JSON.stringify({
         inputs: `<|begin_of_text|><|start_header_id|>system<|end_header_id|>\n\n${RESTAURANT_SYSTEM_PROMPT}<|eot_id|><|start_header_id|>user<|end_header_id|>\n\n${userMessage}<|eot_id|><|start_header_id|>assistant<|end_header_id|>\n\n`,
-        parameters: { max_new_tokens: 300, temperature: 0.7 },
+        parameters: { max_new_tokens: 500, temperature: 0.7 }, // Increased to ensure complete responses
       }),
     });
 
