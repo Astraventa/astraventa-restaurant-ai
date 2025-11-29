@@ -1,0 +1,5 @@
+[33m7ae413d[m[33m ([m[1;36mHEAD[m[33m -> [m[1;32mmain[m[33m)[m feat: add voice-to-text with mic icon; fix AI response handling to use fallback field; improve error messages
+[33mb920e20[m fix: resolve all TypeScript errors in chat-ai function; add Deno type ignores and fix cleanContent regex
+[33m2098426[m fix: improve chat-ai error handling and add deployment checklist; validate Supabase env vars
+[33mcc0b39f[m[33m ([m[1;31morigin/main[m[33m, [m[1;31morigin/HEAD[m[33m)[m fix: remove Lovable branding from OG images and README; use Astraventa logo for social previews
+[33m2e5facc[m chore(chat-ai): add topic guardrails and strip <think> tags; Urdu/English handling
