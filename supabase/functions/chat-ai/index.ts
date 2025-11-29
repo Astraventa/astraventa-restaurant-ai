@@ -1,9 +1,11 @@
 // deno-lint-ignore-file no-explicit-any
+// @ts-ignore - Deno runtime types
 import { serve } from "https://deno.land/std@0.224.0/http/server.ts";
 
 type ChatMessage = { role: "system" | "user" | "assistant"; content: string };
 type ChatRequest = { messages: ChatMessage[]; conversation_id?: string };
 
+// @ts-ignore - Deno runtime
 const CORS_ORIGIN = Deno.env.get("CORS_ORIGIN") ?? "*";
 
 const corsHeaders = {
@@ -44,15 +46,17 @@ function cleanContent(text: string | undefined): string {
   try {
     // Remove any leaked chain-of-thought tags
     let out = text.replace(/<think>[\s\S]*?<\/think>/gi, "");
+    out = out.replace(/<think>[\s\S]*?<\/redacted_reasoning>/gi, "");
     // Collapse excessive whitespace
     out = out.replace(/\n{3,}/g, "\n\n").trim();
     return out;
   } catch {
-    return text;
+    return text || "";
   }
 }
 
 async function callGroq(messages: ChatMessage[]): Promise<{ content: string; model: string; latency?: number } | null> {
+  // @ts-ignore - Deno runtime
   const apiKey = Deno.env.get("GROQ_API_KEY");
   if (!apiKey) return null;
 
@@ -92,6 +96,7 @@ async function callGroq(messages: ChatMessage[]): Promise<{ content: string; mod
 }
 
 async function callOpenRouter(messages: ChatMessage[]): Promise<{ content: string; model: string; latency?: number } | null> {
+  // @ts-ignore - Deno runtime
   const apiKey = Deno.env.get("OPENROUTER_API_KEY");
   if (!apiKey) return null;
 
@@ -134,6 +139,7 @@ async function callOpenRouter(messages: ChatMessage[]): Promise<{ content: strin
 
 // Hugging Face Router (OpenAI-compatible endpoint)
 async function callHuggingFaceRouter(messages: ChatMessage[]): Promise<{ content: string; model: string; latency?: number } | null> {
+  // @ts-ignore - Deno runtime
   const apiKey = Deno.env.get("HF_TOKEN");
   if (!apiKey) return null;
 
@@ -173,6 +179,7 @@ async function callHuggingFaceRouter(messages: ChatMessage[]): Promise<{ content
 }
 
 async function callHuggingFace(messages: ChatMessage[]): Promise<{ content: string; model: string; latency?: number } | null> {
+  // @ts-ignore - Deno runtime
   const apiKey = Deno.env.get("HUGGINGFACE_API_KEY");
   if (!apiKey) return null;
 
