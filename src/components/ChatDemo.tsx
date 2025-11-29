@@ -100,6 +100,12 @@ const ChatDemo = () => {
     try {
       const sb = createSupabaseForClient(clientId);
       const conversationHistory: Message[] = messages.slice(-6);
+      
+      // Verify Supabase URL is configured
+      if (!import.meta.env.VITE_SUPABASE_URL) {
+        throw new Error("Supabase URL not configured. Please check environment variables.");
+      }
+      
       const { data, error } = await sb.functions.invoke("chat-ai", {
         body: {
           messages: [...conversationHistory, userMessage].map(m => ({ role: m.role, content: m.content })),
@@ -107,7 +113,15 @@ const ChatDemo = () => {
         },
       });
 
-      if (error) throw error;
+      if (error) {
+        console.error("Supabase function error:", error);
+        throw error;
+      }
+      
+      if (!data || !(data as any)?.content) {
+        console.warn("No content in AI response:", data);
+        throw new Error("Empty response from AI");
+      }
 
       const aiResponse = (data as any)?.content || (data as any)?.fallback || "I apologize, but I'm having trouble processing that right now. Could you please rephrase your question?";
       const model = (data as any)?.model || "unknown";
@@ -130,11 +144,24 @@ const ChatDemo = () => {
           ])
           ;
       }
-    } catch (e) {
+    } catch (e: any) {
       console.error("AI chat error:", e);
+      
+      // Check if it's a network/function error
+      const isNetworkError = e?.message?.includes("Failed to send") || 
+                             e?.message?.includes("ERR_NAME_NOT_RESOLVED") ||
+                             e?.message?.includes("fetch");
+      
+      let errorMessage = "I'd be delighted to help! Our signature dish is the Truffle Risotto with seared scallops. Would you like to reserve a table?";
+      
+      if (isNetworkError) {
+        console.warn("Chat function not accessible. Check if chat-ai function is deployed and Supabase URL is correct.");
+        errorMessage = "I'm having trouble connecting right now. Please try again in a moment, or contact us directly for assistance!";
+      }
+      
       const fallbackMessage: Message = {
         role: "assistant",
-        content: "I'd be delighted to help! Our signature dish is the Truffle Risotto with seared scallops. Would you like to reserve a table?",
+        content: errorMessage,
       };
       setMessages((prev) => [...prev, fallbackMessage]);
       if (conversationId) {
