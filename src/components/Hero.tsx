@@ -52,8 +52,8 @@ const Hero = () => {
             
             <Button
               onClick={() => {
-                const element = document.getElementById("contact");
-                element?.scrollIntoView({ behavior: "smooth" });
+                const message = encodeURIComponent("Hi! I'd like to schedule a demo call to see Astraventa AI in action for my restaurant.");
+                window.open(`https://wa.me/923055255838?text=${message}`, "_blank", "noopener,noreferrer");
               }}
               size="lg"
               className="border-2 border-white/30 bg-white/10 backdrop-blur-sm text-white hover:bg-white/20 text-base sm:text-lg px-8 py-6"

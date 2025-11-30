@@ -238,10 +238,8 @@ const Contact = () => {
               </p>
               <Button
                 onClick={() => {
-                  toast({
-                    title: "Demo request received!",
-                    description: "We'll contact you shortly to schedule.",
-                  });
+                  const message = encodeURIComponent("Hi! I'd like to schedule a demo call to see Astraventa AI in action for my restaurant.");
+                  window.open(`https://wa.me/923055255838?text=${message}`, "_blank", "noopener,noreferrer");
                 }}
                 className="w-full bg-gradient-premium hover:opacity-90 transition-opacity"
               >
